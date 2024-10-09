@@ -1,0 +1,639 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="adminMapper">
+	<select id="login" resultType="Users">
+		select * from users where USERS_STATUS = 'Y' and id = #{id} and pwd = #{pwd} and IS_MANAGER ='Y'
+	</select>
+	
+<!-- 		WHERE TO_DATE(DAILY, 'YYYY-MM-DD') BETWEEN TO_DATE(#{beginDt}, 'YYYY-MM-DD') AND TO_DATE(#{endDt}, 'YYYY-MM-DD') -->
+	<select id="dailyNormalList" parameterType="hashmap" resultType="Daily">
+		select daily, users_count
+		from daily
+		<if test="!beginDt.equals('week') and !beginDt.equals('month') and !beginDt.equals('all')">
+			WHERE TO_DATE(DAILY, 'YYYY-MM-DD') BETWEEN TO_DATE(#{beginDt}, 'YYYY-MM-DD') AND TO_DATE(#{endDt}, 'YYYY-MM-DD')
+		</if>
+		<if test="beginDt.equals('week') and !beginDt.equals('all')">
+			WHERE TO_DATE(DAILY) BETWEEN SYSDATE-7 AND SYSDATE
+		</if>
+		<if test="beginDt.equals('month') and !beginDt.equals('all')">
+			WHERE TO_DATE(DAILY) BETWEEN SYSDATE-30 AND SYSDATE
+		</if>
+		ORDER BY DAILY DESC
+	</select> 
+	
+	<!-- enrollNo, newMarketNo, newSocialNo, newCommnetNo, newReportNo -->
+	<!-- 가입자 수 -->
+	<select id="dailyEnrollList" resultType="Daily"> 
+		select 	DAILY, COUNT(ENROLL_DATE) AS enrollNo
+		from daily
+			LEFT join users on(TO_DATE(daily)=TO_DATE(enroll_date))
+		<if test="!beginDt.equals('week') and !beginDt.equals('month') and !beginDt.equals('all')">
+			WHERE TO_DATE(DAILY, 'YYYY-MM-DD') BETWEEN TO_DATE(#{beginDt}, 'YYYY-MM-DD') AND TO_DATE(#{endDt}, 'YYYY-MM-DD')
+		</if>
+		<if test="beginDt.equals('week')">
+			WHERE TO_DATE(DAILY) BETWEEN SYSDATE-30 AND SYSDATE
+		</if>
+		<if test="beginDt.equals('month')">
+			WHERE TO_DATE(DAILY) BETWEEN SYSDATE-30 AND SYSDATE
+		</if>
+		GROUP BY DAILY
+		ORDER BY DAILY DESC
+	</select>
+	
+	<!-- 카테고리 수 -->
+	<select id="dailyCategoryList" resultType="Daily"> 
+		select 	DAILY,
+				COUNT(DECODE(CATEGORY, '2', 'Y', '3', 'Y', NULL)) AS newMarketNo, 
+				COUNT(DECODE(CATEGORY, '4', 'Y', '5', 'Y', NULL)) AS newMatchingNo
+		from daily LEFT join board on(TO_DATE(DAILY)=TO_DATE(create_date))
+		<if test="!beginDt.equals('week') and !beginDt.equals('month') and !beginDt.equals('all')">
+			WHERE TO_DATE(DAILY, 'YYYY-MM-DD') BETWEEN TO_DATE(#{beginDt}, 'YYYY-MM-DD') AND TO_DATE(#{endDt}, 'YYYY-MM-DD')
+		</if>
+		<if test="beginDt.equals('week')">
+			WHERE TO_DATE(DAILY) BETWEEN SYSDATE-7 AND SYSDATE
+		</if>
+		<if test="beginDt.equals('month')">
+			WHERE TO_DATE(DAILY) BETWEEN SYSDATE-30 AND SYSDATE
+		</if>
+		GROUP BY DAILY
+		ORDER BY DAILY DESC
+	</select>
+	
+	
+	<!-- 댓글 수 계산 -->	
+	<select id="dailyCommentList" resultType="Daily"> 
+		select 	DAILY, COUNT(COM_DATE) AS newCommentNo
+		from daily
+			LEFT join COMMENTS ON(TO_DATE(DAILY)=TO_DATE(COM_DATE))	
+		<if test="!beginDt.equals('week') and !beginDt.equals('month') and !beginDt.equals('all')">
+			WHERE TO_DATE(DAILY, 'YYYY-MM-DD') BETWEEN TO_DATE(#{beginDt}, 'YYYY-MM-DD') AND TO_DATE(#{endDt}, 'YYYY-MM-DD')
+		</if>
+		<if test="beginDt.equals('week')">
+			WHERE TO_DATE(DAILY) BETWEEN SYSDATE-7 AND SYSDATE
+		</if>
+		<if test="beginDt.equals('month')">
+			WHERE TO_DATE(DAILY) BETWEEN SYSDATE-30 AND SYSDATE
+		</if>
+		GROUP BY DAILY
+		ORDER BY DAILY DESC
+	</select>
+	
+	<!-- 신고글 수 계산 -->
+	<select id="dailyReportList" resultType="Daily"> 
+		select 	DAILY,
+				COUNT(REPORT_DATE) AS newReportNo
+		from daily	
+			LEFT JOIN REPORT_LIST ON(TO_DATE(DAILY)=TO_DATE(REPORT_DATE))
+		<if test="!beginDt.equals('week') and !beginDt.equals('month') and !beginDt.equals('all')">
+			WHERE TO_DATE(DAILY, 'YYYY-MM-DD') BETWEEN TO_DATE(#{beginDt}, 'YYYY-MM-DD') AND TO_DATE(#{endDt}, 'YYYY-MM-DD')
+		</if>
+		<if test="beginDt == 'week'">
+			WHERE TO_DATE(DAILY) BETWEEN SYSDATE-7 AND SYSDATE
+		</if>
+		<if test="beginDt == 'month'">
+			WHERE TO_DATE(DAILY) BETWEEN SYSDATE-30 AND SYSDATE
+		</if>
+		GROUP BY DAILY
+		ORDER BY DAILY DESC
+	</select>
+	
+	
+	<select id="dailyListCount" resultType="_int">
+		select count(*)	from daily
+	</select>
+	
+	
+	<!-- 게임목록 출력을 위한 컨텐츠 갯수를 구해오는 SQL -->
+	<select id="gameListCount" resultType="_int">
+		SELECT COUNT(*) FROM GAME_LIST WHERE GAME_STATUS = 'Y'
+		<if test="searchOption != null and searchOption.equals('gameName')">
+			AND GAME_NAME LIKE '%' || #{searchContent} || '%'
+		</if>
+		<if test="searchOption != null and searchOption.equals('gameCompany')">
+			AND GAME_COMPANY LIKE '%' || #{searchContent} || '%'
+		</if>
+		<if test="searchOption != null and searchOption.equals('gameGenre')">
+			AND GAME_GENRE LIKE '%' || #{searchContent} || '%'
+		</if>
+	</select>
+	
+	<!-- 게임목록에 대한 정보 조회 -->
+	<select id="gameList" resultType="Game">
+		SELECT G.GAME_NO, GAME_NAME, GAME_COMPANY, GAME_GENRE, GAME_PLAYTIME, GAME_LEVEL, GAME_PEOPLE, GAME_STATUS,
+				 IMG_RENAME AS gameImgRename, IMG_ID AS gameImg,
+        		COUNT(DECODE(B1.CATEGORY, '거래', '거래', NULL)) AS MARKET_COUNT, 
+        		COUNT(DECODE(B1.CATEGORY, '소셜', '소셜', NULL)) AS MATCHING_COUNT
+		FROM GAME_LIST G
+		        LEFT JOIN BOARD B1 ON(G.GAME_NO = B1.GAME_NO)
+		        LEFT JOIN BOARD_MATCHING ON(B1.BOARD_NO = BOARD_MATCHING.REF_BOARD_NO)
+		        LEFT JOIN BOARD_MARKET ON(B1.BOARD_NO = BOARD_MARKET.REF_BOARD_NO)
+		        LEFT JOIN IMAGE ON(G.GAME_NO = IMG_REF_NO)
+        WHERE GAME_STATUS = 'Y' AND IMG_GROUP = 'G'
+	    <if test="searchOption != null and searchOption.equals('gameName')">
+	    	AND GAME_NAME LIKE '%' || #{searchContent} || '%'
+	    </if>
+	    <if test="searchOption != null and searchOption.equals('gameCompany')">
+	    	AND GAME_COMPANY LIKE '%' || #{searchContent} || '%'
+	    </if>
+	    <if test="searchOption != null and searchOption.equals('gameGenre')">
+			AND GAME_GENRE LIKE '%' || #{searchContent} || '%'
+		</if>
+		GROUP BY G.GAME_NO, GAME_NAME, GAME_COMPANY, GAME_GENRE, GAME_PLAYTIME, GAME_LEVEL, GAME_PEOPLE, GAME_STATUS, IMG_RENAME, IMG_ID
+		ORDER BY G.GAME_NO DESC
+	</select>
+	
+	
+	<update id="deleteGame">
+		UPDATE GAME_LIST 
+		SET GAME_STATUS = 'N' 
+		WHERE GAME_NO IN
+		<foreach collection="list" item="item" open="(" close=")" separator=", ">
+			${item}		
+		</foreach>
+	</update>
+	
+	<update id="deleteImage">
+		UPDATE IMAGE 
+		SET IMG_STATUS = 'N' 
+		WHERE IMG_ID IN
+		<foreach collection="list" item="item" open="(" close=")" separator=", ">
+			${item}		
+		</foreach>
+	</update>
+	
+	
+	<!-- 게임 정보를 삽입 -->
+	<insert id="insertGame">
+		INSERT ALL 
+		<foreach collection="list" item="item" separator=" ">
+			INTO GAME_LIST 
+			VALUES(NEW_GNO, #{item.gameName}, #{item.gameCompany}, #{item.gameGenre},
+						#{item.gamePlayTime}, #{item.gameLevel}, #{item.gamePeople}, DEFAULT)
+		</foreach>
+		SELECT * FROM DUAL
+	</insert>
+	
+	<!-- 게임정보를 삽입함으로써 생겨난 새로운 게임번호를 받아온다. -->
+	<select id="newGameNoList" resultType="_integer">
+		select game_no
+		from (select game_no from game_list order by game_no desc)
+		where ROWNUM <![CDATA[<]]> ${size}
+		order by game_no
+	</select>
+	
+	<!-- 게임 이미지 등록 -->
+	<insert id="insertGameImage">
+		INSERT ALL
+		<foreach collection="list" item="item" separator=" ">
+			INTO IMAGE VALUES(NEW_IID, #{item.imgName}, #{item.imgRename},
+								#{item.imgGroup}, DEFAULT, ${item.imgRefNo})
+		</foreach>
+		SELECT * FROM DUAL
+	</insert>
+	
+	<!-- 등록한 게임 이미지에 대한 imageId들을 조회 -->
+	<select id="imageIdList" resultType="_integer">
+		SELECT IMG_ID
+		FROM IMAGE
+		WHERE IMG_RENAME IN 
+		<foreach collection="list" item="item" open="(" close=")" separator=",">
+			#{item.imgRename}
+		</foreach>
+		ORDER BY IMG_ID ASC 
+	</select>
+	
+	
+	<select id="gameDetail" resultType="Game">
+		SELECT G.GAME_NO, GAME_NAME, GAME_COMPANY, GAME_GENRE, GAME_PLAYTIME, GAME_LEVEL, GAME_PEOPLE, GAME_STATUS,
+				 IMG_RENAME AS gameImgRename, IMG_ID AS gameImg,
+				COUNT(DECODE(B1.CATEGORY, '2', 'Y', '3', 'Y', NULL)) AS MARKET_COUNT, 
+				COUNT(DECODE(B1.CATEGORY, '4', 'Y', '5', 'Y', NULL)) AS MATCHING_COUNT
+		FROM GAME_LIST G
+				LEFT JOIN BOARD B1 ON(G.GAME_NO = B1.GAME_NO)
+				LEFT JOIN IMAGE ON(G.GAME_NO = IMG_REF_NO)  
+		WHERE GAME_STATUS = 'Y' AND IMG_GROUP = 'G' AND G.GAME_NO = ${gameNo}
+		group by G.GAME_NO, GAME_NAME, GAME_COMPANY, GAME_GENRE, GAME_PLAYTIME, 
+		GAME_LEVEL, GAME_PEOPLE, GAME_STATUS, IMG_RENAME, IMG_ID
+		ORDER BY G.GAME_NO DESC
+	</select>
+	
+	<!-- 이미지 진짜 삭제 -->
+	<delete id="realDeleteImage">
+		DELETE FROM IMAGE WHERE IMG_ID = #{delImgId}
+	</delete>
+	
+	<insert id="updateGameImage" useGeneratedKeys="true">
+		<selectKey resultType="_int" keyProperty="imgId" order="BEFORE">
+			SELECT IMAGE_SEQ.NEXTVAL FROM DUAL
+		</selectKey>
+		INSERT INTO IMAGE
+		VALUES(${imgId}, #{imgName}, #{imgRename}, #{imgGroup}, DEFAULT, ${imgRefNo})
+	</insert>
+	
+	<!-- 게임정보 수정 중 게임이름 중복확인 -->
+	<select id="checkGameName" resultType="_int">
+		SELECT COUNT(*) FROM GAME_LIST WHERE REPLACE(GAME_NAME, ' ', '') = REPLACE(#{gameName}, ' ', '') 
+	</select>
+	
+	
+	<update id="updateGame">
+		UPDATE GAME_LIST
+		SET GAME_NAME = #{gameName}, GAME_COMPANY = #{gameCompany}, GAME_GENRE = #{gameGenre}, 
+			GAME_PLAYTIME = #{gamePlayTime}, GAME_LEVEL = #{gameLevel}, GAME_PEOPLE = #{gamePeople}
+		WHERE GAME_NO = ${gameNo}
+	</update>
+	
+	
+	<select id="usersListCount" resultType="_int">
+		SELECT COUNT(*) FROM USERS 
+		<where>
+			<if test="flag == null">USERS_STATUS = 'Y'</if>
+			<if test="flag != null and flag.equals('search') and id != null">
+				AND ID LIKE '%' || #{id} || '%'
+			</if>
+			<if test="flag != null and flag.equals('search') and grade != null">
+				AND GRADE = #{grade}
+			</if>
+			<if test="flag != null and flag.equals('search') and usersStatus != null">
+				AND USERS_STATUS = #{usersStatus}
+			</if>
+			<if test="flag != null and flag.equals('search') and beginDate != null">
+				AND TO_DATE(ENROLL_DATE, 'YYYY-MM-DD') BETWEEN TO_DATE(#{beginDate}, 'YYYY-MM-DD') AND TO_DATE(#{endDate}, 'YYYY-MM-DD')
+			</if>
+		</where>
+	</select>
+	
+	<select id="weekSearchUsersListCount" resultType="_int">
+		SELECT COUNT(*)
+		FROM USERS
+		WHERE TO_DATE(ENROLL_DATE) BETWEEN TO_DATE(SYSDATE-7) AND TO_DATE(SYSDATE)
+	</select>
+	
+	
+	<!-- 최근 일주일 가입 회원 리스트 출력 -->
+	<select id="weekSearchUsers" resultType="Users">
+		SELECT *
+		FROM USERS
+		WHERE TO_DATE(ENROLL_DATE) BETWEEN TO_DATE(SYSDATE-7) AND TO_DATE(SYSDATE)
+		ORDER BY USERS_NO DESC
+	</select>
+	
+	
+	
+	<!-- 회원 전체 목록 출력 또는 검색 결과 출력 -->
+	<select id="usersSelectList" resultType="Users">
+		SELECT * 
+		FROM USERS
+		<where>
+			<if test="flag != null and flag.equals('search') and id != null">
+				AND ID LIKE '%' || #{id} || '%'
+			</if>
+			<if test="flag != null and flag.equals('search') and grade != null">
+				AND GRADE = #{grade}
+			</if>
+			<if test="flag != null and flag.equals('search') and usersStatus != null">
+				AND USERS_STATUS = #{usersStatus}
+			</if>
+			<if test="flag != null and flag.equals('search') and beginDate != null">
+				AND TO_DATE(ENROLL_DATE, 'YYYY-MM-DD') BETWEEN TO_DATE(#{beginDate}, 'YYYY-MM-DD') AND TO_DATE(#{endDate}, 'YYYY-MM-DD')
+			</if>
+		</where>
+		ORDER BY USERS_NO DESC
+	</select>
+	
+	<!-- 회원 상태 변경 -->
+	<update id="updateStatus">
+		UPDATE USERS SET USERS_STATUS = #{usersStatus} WHERE USERS_NO = #{usersNo}
+	</update>
+	
+	<!-- 회원 정보 상세조회 -->
+	<select id="userInfo" resultType="Users">
+		SELECT *
+		FROM USERS
+		WHERE USERS_NO = #{usersNo}
+	</select>
+	
+	<!-- 회원 닉네임 수정 -->
+	<update id="userModify">
+		UPDATE USERS
+		SET NICKNAME = #{nickname}, REPORT_COUNT = #{reportCount}, UPDATE_DATE = SYSDATE
+		WHERE USERS_NO = #{usersNo}
+	</update>
+	
+	<!-- 회원 등급 수정 -->
+	<update id="updateGrade">
+		UPDATE USERS
+		<set>
+			<if test='isManager != null and isManager.equals("Y")'>
+				IS_MANAGER = #{isManager},
+			</if>
+			<if test="grade != null">
+				GRADE = #{grade}, UPDATE_DATE = SYSDATE
+			</if>
+		</set>
+		WHERE USERS_NO = #{usersNo}
+	</update>
+	
+	
+	<!-- 일주일간 신고글의 갯수를 계산 -->
+	<select id="weekReportListCount" resultType="_int">
+		SELECT COUNT(*) 
+		FROM REPORT_LIST
+		WHERE TO_DATE(REPORT_DATE) BETWEEN SYSDATE-7 AND SYSDATE
+	</select>
+	
+	<!-- 일주일간 신고글에 대해 페이징처리한 리스트 -->
+	<select id="weekReportList" resultType="Report">
+		SELECT REPORT_NO, REPORT_SENDER, REPORT_RECEIVER, REPORT_BOARD, REPORT_DATE, 
+        		REPORT_MSG, REPORT_CONFIRM, 
+        		U1.ID AS SENDERID, U2.ID AS RECEIVERID 
+		FROM REPORT_LIST
+		     JOIN USERS U1 ON(REPORT_SENDER = U1.USERS_NO)
+		     JOIN USERS U2 ON(REPORT_RECEIVER = U2.USERS_NO) 
+	    WHERE TO_DATE(REPORT_DATE) BETWEEN SYSDATE-7 AND SYSDATE
+	    ORDER BY REPORT_NO DESC  
+	</select>
+	
+	
+	
+	
+	
+	
+	
+	
+	<!-- 신고목록에 대한 전체 컨텐츠 갯수 조회 -->	
+	<select id="reportListCount" resultType="_int">
+		SELECT COUNT(*) 
+		FROM REPORT_LIST 
+		<where>
+			<if test="searchOption != null and sel != null and beginDate == null">
+				${sel} IN
+				<foreach collection="targetId" item="item" open="(" close=")" separator=",">
+					 ${item}
+				</foreach>
+			</if>
+			<if test="searchOption != null and beginDate != null and sel == null">
+				TO_DATE(REPORT_DATE, 'YYYY-MM-DD') BETWEEN TO_DATE(#{beginDate}, 'YYYY-MM-DD') AND TO_DATE(#{endDate}, 'YYYY-MM-DD')
+			</if>
+			<if test="searchOption != null and sel != null and beginDate != null">
+				${sel} IN
+				<foreach collection="targetId" item="item" open="(" close=")" separator=",">
+					 ${item}
+				</foreach>
+				AND TO_DATE(REPORT_DATE, 'YYYY-MM-DD') BETWEEN TO_DATE(#{beginDate}, 'YYYY-MM-DD') AND TO_DATE(#{endDate}, 'YYYY-MM-DD')
+			</if>
+		</where>
+	</select>
+	
+	<!-- 페이징 처리된 신고목록 가져오기 -->
+	<select id="reportAllList" resultType="Report">
+		SELECT REPORT_NO, REPORT_SENDER, REPORT_RECEIVER, REPORT_BOARD, REPORT_DATE, 
+        		REPORT_MSG, REPORT_CONFIRM, 
+        		U1.ID AS SENDERID, U2.ID AS RECEIVERID 
+		FROM REPORT_LIST
+		     JOIN USERS U1 ON(REPORT_SENDER = U1.USERS_NO)
+		     JOIN USERS U2 ON(REPORT_RECEIVER = U2.USERS_NO)
+	    <where>
+			<if test="searchOption != null and sel != null and beginDate == null">
+				${sel} IN
+				<foreach collection="targetId" item="item" open="(" close=")" separator=",">
+					 ${item}
+				</foreach>
+			</if>
+			<if test="searchOption != null and beginDate != null and sel == null">
+				TO_DATE(REPORT_DATE, 'YYYY-MM-DD') BETWEEN TO_DATE(#{beginDate}, 'YYYY-MM-DD') AND TO_DATE(#{endDate}, 'YYYY-MM-DD')
+			</if>
+			<if test="searchOption != null and sel != null and beginDate != null">
+				${sel} IN
+				<foreach collection="targetId" item="item" open="(" close=")" separator=",">
+					 ${item}
+				</foreach>
+				AND TO_DATE(REPORT_DATE, 'YYYY-MM-DD') BETWEEN TO_DATE(#{beginDate}, 'YYYY-MM-DD') AND TO_DATE(#{endDate}, 'YYYY-MM-DD')
+			</if>
+		</where> 
+		ORDER BY REPORT_NO DESC 
+	</select>
+	
+	<!-- 검색한 사용자 아이디를 포함하는 회원 번호를 조회하기 -->
+	<select id="getUserNO" resultType="_integer">
+		SELECT USERS_NO
+		FROM USERS
+		WHERE UPPER(ID) LIKE '%' || UPPER(#{tagetId}) || '%'
+	</select>
+	
+	<select id="noConfirmListCount" resultType="_int">
+		SELECT COUNT(*) FROM REPORT_LIST WHERE REPORT_CONFIRM = 'N'
+	</select>
+	
+	<select id="noConfirmReportList" resultType="Report">
+		SELECT REPORT_NO, REPORT_SENDER, REPORT_RECEIVER, REPORT_BOARD, REPORT_DATE, 
+        		REPORT_MSG, REPORT_CONFIRM, 
+        		U1.ID AS SENDERID, U2.ID AS RECEIVERID 
+		FROM REPORT_LIST
+		     JOIN USERS U1 ON(REPORT_SENDER = U1.USERS_NO)
+		     JOIN USERS U2 ON(REPORT_RECEIVER = U2.USERS_NO)
+     	WHERE REPORT_CONFIRM = 'N' 
+		ORDER BY REPORT_NO DESC
+	</select>
+	
+	<!-- 신고목록 컨펌 변경(ajax) -->
+	<update id="updateReport">
+		UPDATE REPORT_LIST SET REPORT_CONFIRM = #{reportConfirm} WHERE REPORT_NO = ${reportNo}
+	</update>
+	
+	
+	<select id="dailyNormalRecentList" resultType="Daily">
+		SELECT *
+		FROM  (select daily, users_count
+		       from daily
+		       ORDER BY DAILY DESC)
+		WHERE ROWNUM <![CDATA[<]]> 6
+	</select>
+	
+	<select id="dailyEnrollRecentList" resultType="Daily">
+		SELECT *
+		FROM (select 	DAILY, COUNT(ENROLL_DATE) AS enrollNo
+				from daily
+					LEFT join users on(TO_DATE(daily)=TO_DATE(enroll_date))
+		GROUP BY DAILY
+		ORDER BY DAILY DESC)
+		WHERE ROWNUM <![CDATA[<]]> 6
+	</select>
+	
+	<select id="dailyCategoryRecentList" resultType="Daily">
+		select *
+		from (select 	DAILY,
+		        COUNT(DECODE(CATEGORY, '2', 'Y', '3', 'Y', NULL)) AS newMarketNo, 
+		        COUNT(DECODE(CATEGORY, '4', 'Y', '5', 'Y', NULL)) AS newMatchingNo
+		        from daily LEFT join board on(TO_DATE(DAILY) = TO_DATE(CREATE_DATE))
+		        GROUP BY DAILY
+		        ORDER BY DAILY DESC)
+		WHERE ROWNUM <![CDATA[<]]> 6
+	</select>
+	
+	<select id="dailyCommentRecentList" resultType="Daily">
+		SELECT * 
+		FROM (SELECT DAILY, COUNT(COM_DATE) AS newCommentNo 
+		        FROM DAILY 
+		            LEFT JOIN COMMENTS ON(TO_DATE(DAILY)=TO_DATE(COM_DATE)) 
+		        GROUP BY DAILY 
+		        ORDER BY DAILY DESC )
+		WHERE ROWNUM <![CDATA[<]]> 6
+	</select>
+	
+	<select id="dailyReportRecentList" resultType="Daily">
+		SELECT * 
+		FROM (SELECT DAILY, COUNT(REPORT_DATE) as newReportNo 
+		        FROM DAILY 
+		            LEFT JOIN REPORT_LIST ON(TO_DATE(DAILY)=TO_DATE(REPORT_DATE)) 
+		        GROUP BY DAILY 
+		        ORDER BY DAILY DESC )
+		WHERE ROWNUM <![CDATA[<]]> 6
+	</select>
+	
+	<!-- 회원번호, 아이디, 이름, 신고횟수, 상태  -->
+	<select id="usersRecentList" resultType="Users">
+		SELECT *
+		FROM (SELECT USERS_NO, ID, USERS_NAME, REPORT_COUNT, USERS_STATUS 
+		    FROM USERS
+		    ORDER BY USERS_NO DESC)
+		WHERE ROWNUM <![CDATA[<]]> 6
+	</select>
+	
+	<!-- 신고일자, 신고자, 신고대상, 게시글, 신고메시지 -->
+	<select id="reportRecentList" resultType="Report">
+		SELECT *
+		FROM (SELECT REPORT_DATE, U1.ID AS SENDERID, U2.ID AS RECEIVERID, REPORT_BOARD, REPORT_MSG, REPORT_CONFIRM 
+		    FROM REPORT_LIST
+		            JOIN USERS U1 ON(REPORT_SENDER = U1.USERS_NO)
+		            JOIN USERS U2 ON(REPORT_RECEIVER = U2.USERS_NO)
+		    ORDER BY REPORT_DATE DESC)
+		WHERE ROWNUM <![CDATA[<]]> 6 AND REPORT_CONFIRM = 'N'
+	</select>
+	
+	<!-- 게임명, 소요시간, 게임난이도, 마켓 건, 소셜 건 -->
+	<select id="gameRecentList" resultType="Game">
+		SELECT *
+		FROM (SELECT GAME_NAME, GAME_PLAYTIME, GAME_LEVEL,
+		            COUNT(DECODE(CATEGORY, '2', 'Y', '3', 'Y', NULL)) MARKETCOUNT,
+		            COUNT(DECODE(CATEGORY, '4', 'Y', '5', 'Y', NULL)) MATCHINGCOUNT
+		       FROM GAME_LIST
+		            JOIN BOARD USING(GAME_NO)
+		       GROUP BY  GAME_NO, GAME_NAME, GAME_PLAYTIME, GAME_LEVEL
+		       ORDER BY MARKETCOUNT+MATCHINGCOUNT DESC)
+		WHERE ROWNUM <![CDATA[<]]> 6
+	</select>
+	
+	<update id="pwdResetUpdate">
+		UPDATE USERS SET PWD = #{pwd} WHERE USERS_NO = #{usersNo}
+	</update>
+	
+	<select id="weekQueryListCount" resultType="_int">
+		SELECT COUNT(*) 
+		FROM BOARD_QUERY
+		        JOIN BOARD ON(REF_BOARD_NO = BOARD_NO)
+		WHERE TO_DATE(CREATE_DATE) BETWEEN TO_DATE(SYSDATE-7) AND TO_DATE(SYSDATE) AND BOARD_STATUS = 'Y'
+	</select>
+	
+	<select id="weekQueryList" resultType="BoardQuery">
+		SELECT *
+		FROM BOARD_QUERY 
+		        JOIN BOARD ON(REF_BOARD_NO = BOARD_NO)
+		        JOIN USERS USING(USERS_NO)
+		WHERE TO_DATE(CREATE_DATE) BETWEEN TO_DATE(SYSDATE-7) AND TO_DATE(SYSDATE) AND BOARD_STATUS = 'Y'
+	</select>
+	
+	<select id="AllQueryListCount" resultType="_int">
+		SELECT COUNT(*)
+		FROM BOARD_QUERY
+				JOIN BOARD ON(REF_BOARD_NO = BOARD_NO)
+		WHERE BOARD_STATUS = 'Y'
+	</select>
+	
+	<select id="AllQueryList" resultType="BoardQuery">
+		SELECT *
+		FROM BOARD_QUERY 
+		        JOIN BOARD ON(REF_BOARD_NO = BOARD_NO)
+		        JOIN USERS USING(USERS_NO)
+       WHERE BOARD_STATUS = 'Y' 
+	</select>
+	
+	<select id="noConfirmQueryListCount" resultType="_int">
+		SELECT COUNT(*)
+		FROM BOARD_QUERY 
+		        JOIN BOARD ON(REF_BOARD_NO = BOARD_NO)
+		        JOIN USERS USING(USERS_NO)
+		WHERE IS_COMPLETE = 'N' AND BOARD_STATUS = 'Y'
+	</select>
+	
+	<select id="noConfirmQuery" resultType="BoardQuery">
+		SELECT *
+		FROM BOARD_QUERY 
+		        JOIN BOARD ON(REF_BOARD_NO = BOARD_NO)
+		        JOIN USERS USING(USERS_NO)
+		WHERE IS_COMPLETE = 'N' AND BOARD_STATUS = 'Y'
+	</select>
+	
+	<update id="updateQuery">
+		UPDATE BOARD
+		SET IS_COMPLETE = #{changeConfirm}
+		WHERE BOARD_NO = #{refBoardNo}
+	</update>
+	
+	<select id="queryDetail" resultType="BoardQuery">
+		SELECT *
+		FROM BOARD_QUERY 
+		        JOIN BOARD ON(REF_BOARD_NO = BOARD_NO)
+		        JOIN USERS USING(USERS_NO)
+		WHERE QUERY_NO = ${queryNo} AND BOARD_STATUS = 'Y'
+	</select>
+	
+	<select id="queryBoardDetail" resultType="Board">
+		SELECT *
+		FROM BOARD_QUERY 
+		        JOIN BOARD ON(REF_BOARD_NO = BOARD_NO)
+		        JOIN USERS USING(USERS_NO)
+		WHERE QUERY_NO = ${queryNo} AND BOARD_STATUS = 'Y'
+	</select>
+	
+	<update id="deleteBoardQuery">
+		UPDATE BOARD
+		SET BOARD_STATUS = 'N'
+		WHERE BOARD_NO = ${boardNo}
+	</update>	
+	
+	<select id="getEmail" resultType="string">
+		SELECT EMAIL FROM USERS WHERE USERS_NO = ${usersNo}
+	</select>
+	
+	<select id="searchQueryListCount" resultType="_int">
+		SELECT COUNT(*)
+		FROM BOARD_QUERY
+				JOIN BOARD ON(REF_BOARD_NO = BOARD_NO)
+		WHERE BOARD_STATUS = 'Y'
+		<if test="queryReason != null">
+			AND QUERY_REASON LIKE '%' || #{queryReason} || '%'
+		</if>
+		<if test="beginDate != null">
+			AND TO_DATE(CREATE_DATE) BETWEEN #{beginDate} AND #{endDate}
+		</if>	
+	</select>
+	
+	<select id="searchQueryList" resultType="BoardQuery">
+		SELECT *
+		FROM BOARD_QUERY
+				JOIN BOARD ON(REF_BOARD_NO = BOARD_NO)
+		WHERE BOARD_STATUS = 'Y'
+		<if test="queryReason != null">
+			AND QUERY_REASON LIKE '%' || #{queryReason} || '%'
+		</if>
+		<if test="beginDate != null">
+			AND TO_DATE(CREATE_DATE) BETWEEN #{beginDate} AND #{endDate}
+		</if>	
+	</select>
+	
+	
+</mapper>

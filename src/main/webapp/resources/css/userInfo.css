@@ -1,0 +1,17 @@
+@charset "UTF-8";
+#header{ height: 110px;}
+footer{ height: 220px; }
+#mid{ display: grid; grid-template-columns: 1fr 240px 1180px 1fr; grid-template-rows: 1000px;}
+
+#adminContainer{display: grid; grid-template-rows: 100px 60px 40px 700px 100px;}
+
+#admin_title div{margin: 40px;}
+#admin_search{ display: grid; grid-template-columns: 1fr 850px 150px 1fr;}
+#admin_search div:nth-child(3){ text-align:right;}
+#admin_submit{display: grid; grid-template-columns: 1fr 1000px 1fr;}
+#admin_submit div:nth-child(2){ text-align:left;}
+/*버튼 좀 이쁘게 못만드나?*/
+
+#admin_list{ display: grid; grid-template-columns: 1fr 1000px 1fr;}
+
+#pageButton{ text-align: center;}

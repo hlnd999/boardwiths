@@ -1,0 +1,328 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="boardMapper">
+	<select id="getListCount" resultType="_int">
+		select count(*)
+         from board
+         where board_status = 'Y' and 
+         category in 
+         <foreach collection="category.split(',')" item="item" open="(" close=")" separator=",">
+         	#{item}
+         </foreach>
+	</select>
+
+	<select id="selectBoardList" resultType="Board">
+		select *
+		from board
+		    join users using(USERS_NO)
+		where board_status = 'Y' and category in
+		<foreach collection="category.split(',')" item="item" open="(" close=")" separator=",">
+         	 #{item}
+        </foreach>
+		order by board_no desc
+	</select>
+	
+	<select id="selectBoard" resultType="Board">
+		select *
+		from board
+			join users using(USERS_NO)
+		where board_status = 'Y' and board_No = #{ bNo }
+	</select>
+	
+	<select id="selectBoardMarket" resultType="BoardMarket">
+		select *
+		from board_market
+		where ref_board_No = #{ bNo }
+	</select>
+	
+	<select id="selectBoardMatching" resultType="BoardMatching">
+		select *
+		from board_matching
+		where ref_board_No = #{ bNo }
+	</select>
+	
+	<select id="selectBoardQuery" resultType="BoardQuery">
+		select *
+		from board_query
+		where ref_board_No = #{ bNo }
+	</select>
+		
+	<select id="selectGameNo" resultType="Game">
+		select *
+		from game_list
+    		join board using(game_no)
+		where board.board_no = #{ bNo } 
+	</select>
+	
+	<select id="selectImageRename" resultType="string">
+		select img_rename
+		from image
+		where img_ref_no = #{ refNo } and img_group = #{ imgGroup }
+	</select>
+	
+	<select id="getSearchListCount" resultType="_int">
+		select count(*)
+		from board
+			join users using(users_no)
+			join game_list using(game_no)
+		where board_status = 'Y'
+		and category in
+		<foreach collection="category.split(',')" item="item" open="(" close=")" separator=",">
+         	 #{item}
+        </foreach>
+		<if test="condition == 'writer'">
+			and nickname like '%' || #{value} || '%'
+		</if>
+		<if test="condition == 'content' or condition == 'title'">
+			and (content like '%' || #{value} || '%' or title like '%' || #{value} || '%')
+		</if>
+			<if test="condition == 'gameName'">
+			and game_name like '%' || #{value} || '%'
+		</if>
+		 <if test="condition != 'writer' and condition != 'content' and condition != 'title' and condition != 'gameName'">
+	        and (nickname like '%' || #{value} || '%'
+	        or title like '%' || #{value} || '%'
+	        or content like '%' || #{value} || '%'
+	        or game_name like '%' || #{value} || '%')
+		</if>
+		
+	</select>
+	
+	<select id="selectSearchList" resultType="Board">
+		select *
+		from board
+			join users using(users_no)
+			join game_list using(game_no)
+		where board_status = 'Y'
+		and category in
+		<foreach collection="category.split(',')" item="item" open="(" close=")" separator=",">
+         	 #{item}
+        </foreach>
+		<if test="condition == 'writer'">
+			and nickname like '%' || #{value} || '%'
+		</if>
+		<if test="condition == 'content' or condition == 'title'">
+			and ${condition} like '%' || #{value} || '%'
+		</if>
+		<if test="condition == 'gameName'">
+			and game_name like '%' || #{value} || '%'
+		</if>
+		<if test="condition != 'writer' and condition != 'content' and condition != 'title'">
+			and (nickname like '%' || #{value} || '%'
+			or title like '%' || #{value} || '%'
+			or content like '%' || #{value} || '%'
+			or game_name like '%' || #{value} || '%')
+		</if>
+		order by board_no desc
+	</select>
+	
+	<select id="getBoardQueryListCount" resultType="_int">
+	    select count(*)
+	    from board
+	        join users using(USERS_NO)
+	    where board_status = 'Y' and users_no = #{loginUsersNo} and category = '6'
+	    order by board_no desc
+	</select>
+	
+	<select id="selectBoardQueryList" resultType="Board">
+	    select *
+	    from board
+	        join users using(USERS_NO)
+	    where board_status = 'Y' and users_no = #{loginUsersNo} and category = '6'
+	    order by board_no desc
+	</select>
+	
+	<update id="deleteBoard">
+		update board
+		set board_status = 'N'
+		where board_No = #{bNo}
+	</update>
+	
+	<update id="updateCount">
+		update board
+		set board_count = board_count + 1
+		where board_No = #{ bNo }
+	</update>
+	
+	<select id="selectComments" resultType="Comments">
+		select *
+		from comments
+			join users using(users_no)
+		where ref_board_No = #{ bNo }
+		order by com_No desc
+	</select>
+	
+	<insert id="insertComments" useGeneratedKeys="true">
+		insert into comments
+		values (comments_seq.nextval, #{ usersNo }, SYSDATE, #{ refBoardNo }, #{ comContent })
+	</insert>
+	
+	<update id="deleteComments">
+		delete
+		from comments
+		where com_No = #{ comNo }
+	</update>
+	
+	<update id="updateComments">
+		update comments
+		set com_content = #{ comContent }
+		where com_no = #{ comNo }
+	</update>
+	
+	<select id="countBLikes" resultType="_int">
+		select count(*)
+		from Board_Like
+		where ref_board_no = #{ bNo }
+	</select>
+	
+	<select id="checkBLikes" resultType="_int">
+		select count(*)
+		from Board_Like
+		where ref_board_no = #{ refBoardNo } and users_no = #{ loginUsersNo }
+	</select>
+	
+	<insert id="insertBLikes">
+		insert into board_like
+		values (Board_like_seq.nextval, #{ loginUsersNo }, #{ refBoardNo })
+	</insert >
+	
+	<delete id="deleteBLikes">
+		delete from board_like
+		where users_no = #{ loginUsersNo } and ref_board_no = #{ refBoardNo }
+	</delete>
+	
+	<select id="countCLikes" resultType="_int">
+		select count(*)
+		from com_like
+		where com_no = #{ cNo }
+	</select>
+	
+	<!-- 게임검색후 출력 -->
+   	<select id="selectGameList" resultType="Game">
+   		select GAME_NO, GAME_NAME, GAME_COMPANY, GAME_GENRE, GAME_PLAYTIME, GAME_LEVEL, GAME_PEOPLE, GAME_STATUS, IMG_RENAME AS GAME_IMG_RENAME
+   		from game_list
+   			join image on (GAME_NO = img_REF_NO)
+   		where REPLACE(game_name, ' ', '') = #{ gameName } or game_name = #{ gameName } AND IMG_GROUP='G'
+   	</select>
+  
+    <!-- BOARD 테이블에 제목,내용,카테고리,게임번호를 저징  -->
+    <insert id="insertBasicInfo" parameterType="Board" useGeneratedKeys="true">
+    	<selectKey keyProperty="boardNo" resultType="_int" order="BEFORE">
+    		select BOARD_SEQ.NEXTVAL
+    		from dual
+    	</selectKey>
+    		INSERT INTO board (board_No, users_No, game_No, category, title, content, create_Date, board_Count, is_Notice, is_Complete, board_Status)
+    		VALUES (#{boardNo}, #{usersNo}, #{gameNo}, #{category}, #{title}, #{content}, sysdate, default, default, default, default)
+	</insert> 
+	
+	
+	<!-- BOARD_MARKET 테이블에 가격, 상태를 저장 -->
+	<insert id="insertBSInfo" parameterType="BoardMarket">
+		insert into board_Market
+		values (BOARD_MARKET_SEQ.nextval,#{price},#{status},#{refBoardNo})
+	</insert>
+	
+	<!-- IMAGE 테이블에 이미지이름,이미지rename이름, 그룹번호를 저장 -->
+	<insert id="insertBoardImg">
+		insert into Image
+		values (IMAGE_SEQ.nextval, #{imgName}, #{imgRename}, #{imgGroup}, default, #{imgRefNo})
+	</insert>
+	 
+ 	<!-- 문의테이블에 데이터 저장 -->
+	<insert id="insertQuery">
+		insert into board_Query
+		values (BOARD_QUERY_SEQ.nextval,#{queryReason},#{refBoardNo})
+	</insert>
+	
+	<!-- 매칭테이블에 데이터 저장 -->
+	<insert id="insertMatchingInfo">
+		insert into board_Matching
+		values (BOARD_MATCHING_SEQ.nextval, default,  #{maxMember}, sysdate, sysdate + 3,  #{place} ,#{refBoardNo})
+		<!--                            참여회원수는 default           올린날짜   마감날짜(3일후 마감) -->
+	</insert>
+	
+	<!-- 수정부분 mapper -->
+	<!-- BOARD 테이블 수정  -->
+	<update id="updateBasicInfo">
+		UPDATE board
+    SET 
+        title = #{title},
+        content = #{content},
+        category = #{category},
+        game_No = #{gameNo},
+        create_date = sysdate
+        
+    WHERE board_No = #{boardNo} 
+	</update>
+	
+	<!-- BOARD_MARKET 테이블 수정 -->
+	<update id="updateBSBoard">
+		UPDATE board_Market
+    SET 
+        price = #{price},
+        status = #{status}
+    WHERE ref_Board_No = #{refBoardNo}
+	</update>
+	
+	<!-- MATCHING 테이블 수정 -->
+	<update id="updateMatchingInfo">
+	UPDATE board_Matching
+    	SET 
+        max_Member = #{maxMember},
+        place = #{place},
+        make_date = #{makeDate},
+        duedate = #{makeDate} + 3
+    WHERE ref_Board_No = #{refBoardNo}
+	</update>
+	
+	<select id="selectMyMatBoard" resultType="Board">
+		select *
+		from board_matching
+        	join board on(board_no = ref_board_no)
+        where users_no = #{loginUsersNo}
+	</select>
+	
+	<!-- QUERY 테이블 수정 -->
+	<update id="updateQuery">
+	UPDATE board_Query
+   	SET 
+        query_Reason = #{queryReason}
+    WHERE ref_Board_No = #{refBoardNo}
+	</update>
+	
+	<!-- image테이블 수정 -->
+	<update id="updateBoardImg">
+    UPDATE Image
+    SET 
+        img_Name = #{imgName},
+        img_Rename = #{imgRename},
+        img_Group = #{imgGroup}
+    WHERE img_Ref_No = #{imgRefNo}
+	</update>
+	
+	<!-- 수정화면에 데이터 띄우기 -->
+	<select id="selectGame" resultType="Game">
+		select *
+	   	from game_list
+	    	join board using(game_no)
+		where board.board_no = #{ bNo } 
+	</select>
+	
+	<select id="selectImg" resultType="string">
+		select img_rename
+	      from image
+	    where img_ref_no = #{ bNo } and img_group = 'B'
+	</select>
+	
+	<select id="selectQuery" resultType="BoardQuery">
+		select *
+			from board_query
+		where ref_board_no = ${bNo}	
+	</select>
+	
+	<select id="selectBoardT" resultType="Board">
+		select *
+		from board
+		where board_status = 'Y' and board_No = #{ boardN }
+	</select>
+</mapper>

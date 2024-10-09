@@ -1,0 +1,49 @@
+#header{ height: 110px; background: yellowgreen;}
+footer{ height: 220px; background: gray;}
+#mid{ display: grid; grid-template-columns: 1fr 240px 1180px 1fr; grid-template-rows: 1000px;}
+
+#adminContainer{display: grid; grid-template-rows: 100px 60px 40px 700px 100px;}
+.summary_info li{ /*가로폭의 합계 : 910px => 200px + 710px*/
+    display: grid; grid-template-columns: 200px 710px; height:70px;
+    text-align: center; 
+}
+.summary_info li:first-child{padding-top: 20px;}
+.summary_info li div:nth-child(2){text-align: left;}
+.summary_info input{background:lightyellow; width:200px; height:30px;}
+#info{background: white; width:100px; height:30px; border:2px solid blue;}
+#reportMsg{background:lightyellow; width:600px; height:300px; resize:none; font-size: 16px; }
+.summary_info{ 
+    border: 1px solid black;
+    box-shadow: 3px 3px gray;
+}
+#info:hover{background: skyblue; cursor:pointer;}
+#info:active{background: pink; cursor:pointer;}
+
+
+
+
+#admin_title div{margin: 40px;}
+#admin_search{ display: grid; grid-template-columns: 1fr 780px 130px 1fr;}
+#admin_search div:nth-child(3){ text-align:right;}
+#admin_submit{display: grid; grid-template-columns: 1fr 910px 1fr;}
+#admin_submit div:nth-child(2){ text-align:left;}
+/*버튼 좀 이쁘게 못만드나?*/
+
+#admin_list{ display: grid; grid-template-columns: 1fr 910px 1fr;}
+#admin_list ul{padding-left: 0px;} /*ul태그를 중앙정렬하기 위해서 기본값 padding-left: 40px을 없앰*/
+.checkbox{width:20px; height:20px;}
+
+#pageButton{ text-align: center;}
+#pageButton button{width: 100px; height:35px; background:white; border:2px solid blue;}
+#pageButton button:hover{background: skyblue;}
+#pageButton button:active{background: pink;}
+
+
+nav{ background:forestgreen;}
+.blank{ background: skyblue;}
+#content{ background: pink;}
+
+
+
+
+

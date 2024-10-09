@@ -1,0 +1,270 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="usersMapper">
+	<select id="login" resultType="Users">
+		select *
+			from users
+			where id = #{ id } and users_status = 'Y'
+	</select>
+	
+    <insert id="insertUsers" useGeneratedKeys="true">
+        <selectKey resultType="_int" keyProperty="usersNo" order="BEFORE">
+            select users_seq.nextval from dual
+        </selectKey>
+        insert into users
+        values(#{usersNo}, #{id}, #{pwd}, #{nickname}, #{usersName}, #{phone}, #{email}, default, default, sysdate, null, null, sysdate, default, default)
+    </insert>
+    
+    <select id="topList" resultType="map">
+		<![CDATA[
+		select *
+		from (select game_name, img_rename, sum(board_count) sum_count
+        from board
+             join game_list using(game_no)
+             join image on(img_ref_no = game_no)
+        where game_name != '-'
+              and board_status = 'Y'
+              and img_group = 'G'
+        group by game_name, img_rename
+        order by sum_count desc nulls last)
+		where rownum <= 5
+		]]>
+	</select>
+	
+	<select id="selectEmail" resultType="Users">
+		select email
+		from users
+		where id = #{id}
+	</select>
+	
+	<update id="updatePwd">
+		update users
+		set pwd = #{pwd}
+		where id = #{id}
+	</update>
+	
+	<select id="checkId" resultType="_int">
+		select count(*)
+		from users
+		where id = #{id}
+	</select>
+	
+	<select id="checkNickname" resultType="_int">
+		select count(*)
+		from users
+		where nickname = #{nickname}
+	</select>
+	
+	<insert id="reportUsers" useGeneratedKeys="true">
+		insert into report_list
+		values (report_list_seq.nextval, #{ reportSender }, #{ reportReceiver }, #{ reportBoard }, SYSDATE, #{ reportMsg }, default)
+	</insert>
+	
+	<select id="getUsersById" resultType="Users">
+		select *
+		from users
+		where id = #{id}
+	</select>
+	
+	<update id="usersChange">
+	    update users
+	    <set>
+	        <if test="usersName != null">users_name = #{usersName},</if>
+	        <if test="nickname != null">nickname = #{nickname},</if>
+	        <if test="id != null">id = #{id},</if>
+	        <if test="pwd != null">pwd = #{pwd},</if>
+	        <if test="phone != null">phone = #{phone},</if>
+	        <if test="email != null">email = #{email},</if>
+	    </set>
+	    where id = #{id}
+	</update>
+
+	<update id="updatePassword">
+		update users
+		set pwd=#{newPwd}
+		where id=#{id}
+	</update>
+		
+	<update id="deleteUser">
+		update users
+		set users_status = 'N', LEAVE_MSG = #{leaveMsg}, LEAVE_DATE = SYSDATE
+		where USERS_NO = #{usersNo}
+	</update>
+	
+	<select id="usersMyPage" resultType="Users">
+		select users_name, nickname, id, pwd, phone,
+        		email, grade, users_no, enroll_date, report_count
+		from users
+		where id = #{id}
+	</select>
+	
+	
+	<update id="updateMember">
+		update users
+		set pwd=#{newPwd}
+		where id=#{id}
+	</update>
+		
+	<select id="dailyInterceptor" resultType="_int">
+		SELECT COUNT(*) FROM DAILY WHERE TO_DATE(DAILY) = TO_DATE(SYSDATE)
+	</select>
+	
+	<update id="dailyUpdate">
+		UPDATE DAILY SET USERS_COUNT = USERS_COUNT + 1 WHERE TO_DATE(DAILY) = TO_DATE(SYSDATE)
+	</update>
+	
+	<insert id="dailyInsert">
+		INSERT INTO DAILY VALUES(SYSDATE, 1)
+	</insert>
+	
+	
+	<!-- 정현 -->
+		<select id="myBoardListCount" resultType="_int">
+		select count(*)
+		from board
+		where users_no = #{usersNo} and board_status = 'Y'
+	</select>
+	<select id="selectMyList" resultType="Board">
+	 	SELECT * 
+		FROM BOARD
+			JOIN USERS USING(USERS_NO)
+		WHERE USERS_NO = #{usersNo} and board_status = 'Y'
+		order by create_date desc
+	</select>
+
+
+	<select id="myReplyListCount" resultType="_int">
+		select count(*)
+		from comments
+		where users_no = #{usersNo}
+	</select>
+	<select id="selectMyReplyList" resultType="Comments">
+	 	SELECT *
+		FROM comments c
+		    JOIN board b ON c.ref_board_no = b.board_no
+		WHERE c.users_no = #{usersNo}
+		ORDER BY c.com_date DESC
+	</select>
+	
+	
+	<select id="myReBoardListCount" resultType="_int">
+		select count(*)
+		from comments
+			JOIN USERS USING(USERS_NO)
+		where users_no = #{usersNo} 
+	</select>
+	<select id="selectMyReBoardList" resultType="Comments">
+	 	WITH distinct_boards AS (
+		    SELECT DISTINCT BOARD.BOARD_NO
+		    FROM comments
+		    JOIN users ON USERS.users_no = COMMENTS.USERS_NO
+		    JOIN BOARD ON comments.REF_BOARD_NO = BOARD.BOARD_NO
+		    WHERE users.users_no = #{usersNo}
+		)
+		SELECT BOARD.*, USERS.nickname
+		FROM BOARD
+		JOIN distinct_boards ON BOARD.BOARD_NO = distinct_boards.BOARD_NO
+		JOIN users ON BOARD.users_no = users.users_no
+		order by create_date desc
+		
+	</select>
+	
+	
+	<select id="myBoardLikeListCount" resultType="_int">
+		select count(*)
+		from board_like
+		where users_no = #{usersNo}
+	</select>
+	<select id="selectMyBoardLikeList" resultType="Board">
+		SELECT B.BOARD_NO, B.CATEGORY, B.TITLE, U.NICkname, B.CREATE_DATE, B.BOARD_COUNT, L.USERS_NO
+		FROM BOARD B
+			JOIN BOARD_LIKE L ON B.BOARD_NO = L.REF_BOARD_NO
+			JOIN USERS U ON B.USERS_NO = U.USERS_NO
+		WHERE L.USERS_NO = #{usersNo}
+		order by create_date desc
+	</select>
+	
+	<!-- 받은 메세지 -->
+	<select id="receiveMessageCount" resultType="_int">
+		select count(*)
+		from note
+		where note_receiver = #{note_receiver}
+	</select>
+	<select id="selectReceiveMessage" resultType="Note">
+		select note_no, note_sender, nickname, note_content, note_date, note_receiver
+		from note
+		    join users on(users_no = note_sender)
+		where note_receiver = #{usersNo}
+		order by note_date desc	
+	</select>
+	
+	<!-- 보낸 메세지 -->
+	<select id="sendMessageCount" resultType="_int">
+		select count(*)
+		from note
+		where note_sender = #{note_receiver}
+	</select>
+	<select id="selectSendMessage" resultType="Note">
+		select note_no, note_receiver, nickname, note_content, note_date, note_receiver
+		from note
+		    join users on(users_no = note_receiver)
+		where note_sender = #{usersNo}
+		order by note_date desc	
+	</select>
+	
+	<insert id="writingMessage">
+		insert into note
+		values(note_seq.nextval, #{noteSender} , #{noteReceiver} , sysdate, #{noteContent})
+	</insert>
+	
+	<select id="selectReceiver" resultType="Users">
+		select users_no 
+		from users
+		where nickname = #{noteReceiver}
+	</select>
+	
+	<select id="selectMessageDetail" resultType="Note">
+		select *
+		from note
+			join users on(users_no = note_sender)
+		where note_no = #{noteNo}
+	</select>
+	
+	<select id="selectSendMessageDetail" resultType="Note">
+		select *
+		from note
+			join users on(users_no = note_receiver)
+		where note_no = #{noteNo}
+	</select>
+	
+	<delete id="deleteMessage">
+		delete from note
+		where note_no = ${noteNo}
+	</delete>
+	
+	<delete id="deleteCheckMsg">
+		delete from note
+		where note_no in 
+		<foreach collection="list" item="item" open="(" close=")" separator=", ">
+			${item}		
+		</foreach>
+	</delete>
+	
+	<update id="deleteMyBoard">
+		update board
+		set board_status = 'N'
+		where board_no in
+		<foreach collection="list" item="item" open="(" close=")" separator=", ">
+			${item}		
+		</foreach>
+	</update>
+	
+	<delete id="deleteMyReply">
+		delete from comments
+		where com_no in 
+		<foreach collection="list" item="item" open="(" close=")" separator=", ">
+			${item}		
+		</foreach>
+	</delete>
+	
+</mapper>

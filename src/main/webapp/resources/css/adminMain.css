@@ -1,0 +1,17 @@
+#header{ height: 110px; }
+footer{ height: 220px; }
+
+#mid{ display: grid; grid-template-columns: 1fr 240px 1180px 1fr; grid-template-rows: 1000px;} 
+
+table {border-collapse: collapse}
+tr { text-align: center; border-top: 1px solid gray; border-bottom: 1px solid gray; height:63px;}
+#content{ display: grid; grid-template-columns: 590px 590px; grid-template-rows: 500px;}
+.contentTitle{ 
+    margin-top: 10px; margin-bottom: 10px; 
+    text-align: center; font-size: 20px; font-weight: bold;
+}
+.tableContainer {display:grid; grid-template-columns: 1fr 500px 1fr;} 
+
+
+
+

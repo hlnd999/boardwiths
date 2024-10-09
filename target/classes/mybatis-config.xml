@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN" "http://mybatis.org/dtd/mybatis-3-config.dtd" >
+<configuration>
+<!-- 순서 : "(properties?,settings?,typeAliases?,typeHandlers?,objectFactory?,objectWrapperFactory?,reflectorFactory?,plugins?,environments?,databaseIdProvider?,mappers?)". -->
+	
+	<settings>
+		<setting name="mapUnderscoreToCamelCase" value="true"/>
+		<setting name="jdbcTypeForNull" value="NULL"/>
+	</settings>
+	
+	
+	<typeAliases>
+		<typeAlias type="com.kh.boardwiths.users.model.vo.Users" alias="Users"/>
+		<typeAlias type="com.kh.boardwiths.board.model.vo.Board" alias="Board"/>
+		<typeAlias type="com.kh.boardwiths.board.model.vo.BoardMarket" alias="BoardMarket"/>
+		<typeAlias type="com.kh.boardwiths.board.model.vo.BoardMatching" alias="BoardMatching"/>
+		<typeAlias type="com.kh.boardwiths.board.model.vo.BoardQuery" alias="BoardQuery"/>
+		<typeAlias type="com.kh.boardwiths.board.model.vo.Comments" alias="Comments"/>
+		<typeAlias type="com.kh.boardwiths.admin.model.vo.Game" alias="Game"/>
+		<typeAlias type="com.kh.boardwiths.admin.model.vo.Daily" alias="Daily"/>
+		<typeAlias type="com.kh.boardwiths.admin.model.vo.Image" alias="Image"/>
+		<typeAlias type="com.kh.boardwiths.admin.model.vo.Report" alias="Report"/>
+		<typeAlias type="com.kh.boardwiths.board.model.vo.Note" alias="Note"/>
+	</typeAliases>
+
+	<mappers>
+		<mapper resource="mappers/admin-mapper.xml"/>
+		<mapper resource="mappers/board-mapper.xml"/>
+		<mapper resource="mappers/users-mapper.xml"/>
+	</mappers>
+	
+</configuration>

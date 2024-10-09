@@ -1,0 +1,24 @@
+#header{ height: 110px; }
+footer{ height: 220px; }
+#mid{ display: grid; grid-template-columns: 1fr 240px 1180px 1fr; grid-template-rows: 1000px;}
+
+#adminContainer{display: grid; grid-template-rows: 100px 60px 40px 700px 100px;}
+
+.gameInfo{width: 200px; height:30px;}
+.gameRadio{width:15px; height:15px;}
+.gameImage::-webkit-file-upload-button {width: 100px; height:30px; background:white; border:2px solid blue;}
+.gameImage::-webkit-file-upload-button:hover{background: skyblue; cursor:pointer;}
+.gameImage::-webkit-file-upload-button:active{background: pink; cursor:pointer;}
+
+#admin_title div{margin: 40px;}
+#admin_search{ display: grid; grid-template-columns: 1fr 850px 150px 1fr;}
+#admin_search div:nth-child(3){ text-align:right;}
+#admin_submit{display: grid; grid-template-columns: 1fr 1000px 1fr;}
+#admin_submit div:nth-child(2){ text-align:left;}
+/*버튼 좀 이쁘게 못만드나?*/
+
+#admin_list{ display: grid; grid-template-columns: 1fr 1000px 1fr;}
+.checkbox{width:20px; height:20px;}
+.gameRadio{width: 20px; height:20px;}
+
+#pageButton{ text-align: center;}

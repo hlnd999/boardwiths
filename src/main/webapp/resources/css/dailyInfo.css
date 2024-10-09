@@ -1,0 +1,15 @@
+header{ height: 110px; }
+footer{ height: 220px;}
+#mid{ display: grid; grid-template-columns: 1fr 240px 1180px 1fr; grid-template-rows: 1000px;}
+
+#daily{display: grid; grid-template-rows: 100px 100px 700px 100px;}
+
+#admin_title div{margin: 40px; }
+#admin_search{ display: grid; grid-template-columns: 1fr 1000px 1fr;}
+#admin_search div:nth-child(3){ text-align: right;}
+#admin_list{ display: grid; grid-template-columns: 1fr 1000px 1fr;}
+table {border-collapse: collapse}
+th { vertical-align: middle;}
+tr { text-align: center; border-top: 1px solid gray; border-bottom: 1px solid gray; vertical-align: middle;}
+
+#pageButton{  display: grid; grid-template-columns: 1fr 1000px 1fr;}
